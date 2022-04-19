@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 from src.const import BASE_DIR, THRESHOLD
@@ -25,9 +25,26 @@ def edges(arr):
 def crop(img, l, r, t, b):
     return img[l:r, t:b]
 
+def get_class_activation_map(model, img):
+    img = np.expand_dims(img, axis=0)
+
+    predictions = model.predict(img)
+    label_index = np.argmax(predictions)
+    class_weights = model.layers[-1].get_weights()[0]
+    class_weights_winner = class_weights[:, label_index]
+
+    final_conv_layer = model.get_layer(PENULTIMATE_LAYER) 
+
+    get_output = keras.backend.function([model.layers[0].input], [final_conv_layer.output, model.layers[-1].output])
+    [conv_outputs, predictions] = get_output([img])
+    conv_outputs = np.squeeze(conv_outputs)
+    mat_for_mult = sp.ndimage.zoom(conv_outputs, (TARGET_SIZE[0] / conv_outputs.shape[0], TARGET_SIZE[1] / conv_outputs.shape[1], 1), order=1) # dim: 224 x 224 x 2048
+    final_output = np.dot(mat_for_mult.reshape((TARGET_SIZE[0] * TARGET_SIZE[1], 64)), class_weights_winner).reshape(TARGET_SIZE[0], TARGET_SIZE[1]) # dim: 224 x 224
+
+    return final_output, label_index
+
 if __name__ == '__main__':
     ## defined under function to avoid circular imports
-    from src.visualization.cams import get_class_activation_map
     from src.data.generator import get_generators
     
     train, val, test_X, test_y = get_generators(BASE_DIR)

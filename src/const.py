@@ -2,34 +2,27 @@
 # coding: utf-8
 
 import os
-from pathlib import Path
 
-IMAGE_SIZE = (480, 640) 
+IMAGE_SIZE = (1024, 2048) 
 IMAGE_SHAPE = IMAGE_SIZE + (3,)
-TARGET_SIZE = (320, 240)
-TARGET_SHAPE = TARGET_SIZE + (3,)
+
+BASE_DIR = os.getcwd() 
 COLOR_MODE = 'rgb'
 BATCH_SIZE = 4
-PROJECT_NAME = 'connector-classification'
-
-# Dataset params
+PROJECT_NAME = 'telescope'
 CLASS_MODE = 'categorical'
-EPOCHS = 20
+EPOCHS = 10
+AUX_EPOCHS = 10
 
-BASE_DIR = Path(os.getcwd()) #.resolve().parents[0]
-PROD_MODEL_PATH = os.path.join(BASE_DIR,'models')
-
-DATA_TYPE = 'raw' #  displays the type of the data that is in use -- after data processing is complete, this will change accordingly
-THRESHOLD = 0.97
 SEED = 1024
 N_CLASSES = 4
+CROP_THRESHOLD = 0.97
 PENULTIMATE_LAYER = 'conv2d_4'
 
-MLFLOW_TRACKING = 'https://dagshub.com/jinensetpal/connector-classification.mlflow'
-DOWNSCALE_FACTOR = 4
 N_CHANNELS = 3
+DOWNSCALE_FACTOR = 4
+MLFLOW_TRACKING = 'https://dagshub.com/jinensetpal/telesecope.mlflow'
 
-RENDER_SIZE = IMAGE_SIZE 
-RENDER_SHAPE = RENDER_SIZE + (3,)
-DOWNSCALED_SIZE = (RENDER_SIZE[0] // DOWNSCALE_FACTOR, RENDER_SIZE[1] // DOWNSCALE_FACTOR)
-DOWNSCALED_SHAPE = DOWNSCALED_SIZE + (3,)
+TARGET_SIZE = IMAGE_SIZE[0] // 4, IMAGE_SIZE[1] // 4
+TARGET_SHAPE = TARGET_SIZE + (3,)
+AUX_SIZE = (32, 32)
