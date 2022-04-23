@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from src.const import BASE_DIR, THRESHOLD
+from .const import BASE_DIR, THRESHOLD
 import matplotlib.pyplot as plt
 from matplotlib import patches
 from tensorflow import keras
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     from src.data.generator import get_generators
     
     train, val, test_X, test_y = get_generators(BASE_DIR)
-    model = keras.models.load_model(os.path.join('models', 'cnn-real'))
+    model = keras.models.load_model(os.path.join('models', 'localizer'))
 
     fig = plt.figure(figsize=(14, 14),
                     facecolor='white')

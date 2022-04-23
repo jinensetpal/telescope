@@ -4,7 +4,6 @@
 from src.const import BATCH_SIZE, AUX_SIZE, IMAGE_SIZE, BASE_DIR, SEED, N_CLASSES
 from src.data.localization import get_class_activation_map, edges, crop
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from sklearn.model_selection import train_test_split
 from pathlib import Path
 import tensorflow as tf
 from glob import glob
@@ -16,12 +15,12 @@ import os
 
 def create_samples(generator):
     Path('samples').mkdir(parents=True, exist_ok=True)
-    for i, (input_X, input_y) in enumerate(generator):
-        imageio.imwrite(os.path.join('samples', f'{i + 1}_o.png'), input_X['original'][0][:, :, ::-1])
-        imageio.imwrite(os.path.join('samples', f'{i + 1}_c.png'), input_X['cropped'][0][:, :, ::-1])
-        imageio.imwrite(os.path.join('samples', f'{i + 1}_u.png'), input_X['upsampled'][0][:, :, ::-1])
+    for idx, (input_X, input_y) in enumerate(generator):
+        imageio.imwrite(os.path.join('samples', f'{idx + 1}_o.png'), input_X['original'][0][:, :, ::-1])
+        imageio.imwrite(os.path.join('samples', f'{idx + 1}_c.png'), input_X['cropped'][0][:, :, ::-1])
+        imageio.imwrite(os.path.join('samples', f'{idx + 1}_u.png'), input_X['upsampled'][0][:, :, ::-1])
 
-class CroppedGenerator(tf.keras.utils.Sequence):
+class Generator(tf.keras.utils.Sequence):
     def __init__(self, list_IDs, batch_size, dim, n_channels, labels, model,
             n_classes, shuffle=True, state="train", augment=None, seed=None):
         self.dim = dim
