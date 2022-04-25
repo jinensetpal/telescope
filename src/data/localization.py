@@ -44,25 +44,24 @@ def get_class_activation_map(model, img):
     return final_output, label_index
 
 if __name__ == '__main__':
-    ## defined under function to avoid circular imports
-    from src.data.generator import get_generators
-    
-    train, val, test_X, test_y = get_generators(BASE_DIR)
+    df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
+    params = {'dim': [AUX_SIZE, IMAGE_SIZE],
+            'batch_size': BATCH_SIZE,
+            'n_channels': N_CHANNELS,
+            'shuffle': True,
+            'classes': np.unique(df[1]),
+            # 'localizer': os.path.join('models', 'localizer'),
+            'augment': {'rescale': 1/255,
+                'samplewise_center': True,
+                'samplewise_std_normalization': True,
+                'horizontal_flip': False,
+                'vertical_flip': False}}
+    generator = Generator(df.values.tolist(), state='train', seed=SEED, **params)
     model = keras.models.load_model(os.path.join('models', 'localizer'))
 
     fig = plt.figure(figsize=(14, 14),
                     facecolor='white')
     
-    for idx in range(100):
-            out, pred = get_class_activation_map(model, test_X[idx])
-
-            l, r, t, b = edges(out) + edges(out.T)
-            try:
-                imageio.imwrite(os.path.join('visualizations', 'localization', 'original', f'{idx}.png'), test_X[idx]) 
-                imageio.imwrite(os.path.join('visualizations', 'localization', 'cropped', f'{idx}.png'), crop(test_X[idx], l, r, t, b))
-            except:
-                print('failed:', idx)
-
     for idx in range(16):
         out, pred = get_class_activation_map(model, test_X[idx])
         l, r, t, b = edges(out) + edges(out.T)

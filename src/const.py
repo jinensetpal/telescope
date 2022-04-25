@@ -9,7 +9,7 @@ IMAGE_SHAPE = IMAGE_SIZE + (3,)
 
 BASE_DIR = os.getcwd() 
 COLOR_MODE = 'rgb'
-BATCH_SIZE = 16
+BATCH_SIZE = 2 
 PROJECT_NAME = 'telescope'
 CLASS_MODE = 'categorical'
 EPOCHS = 10
@@ -25,4 +25,4 @@ MLFLOW_TRACKING = 'https://dagshub.com/jinensetpal/telesecope.mlflow'
 
 TARGET_SIZE = IMAGE_SIZE[0] // 4, IMAGE_SIZE[1] // 4
 TARGET_SHAPE = TARGET_SIZE + (3,)
-AUX_SIZE = (32, 32)
+AUX_SIZE = IMAGE_SIZE[0] // 16, IMAGE_SIZE[1] // 16

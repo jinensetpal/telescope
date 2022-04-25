@@ -126,18 +126,17 @@ def create_samples(generator):
             imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', f'{idx + 1}_o.png'), input_X[idx][:, :, ::-1])
 
 if __name__ == '__main__': ## tests every generator
-    df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)
+    df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
     params = {'dim': [AUX_SIZE, IMAGE_SIZE],
             'batch_size': BATCH_SIZE,
             'n_channels': N_CHANNELS,
             'shuffle': True,
             'classes': np.unique(df[1]),
-            # 'localizer': os.path.join('models', 'localizer'),
             'augment': {'rescale': 1/255,
                 'samplewise_center': True,
                 'samplewise_std_normalization': True,
                 'horizontal_flip': False,
                 'vertical_flip': False}}
-    cropped_generator = Generator(df.values.tolist(), state='train', seed=SEED, **params)
-    cropped_generator.__getitem__(0)
-    create_samples(cropped_generator)
+    generator = Generator(df.values.tolist(), state='train', seed=SEED, **params)
+    generator.__getitem__(0)
+    create_samples(generator)
