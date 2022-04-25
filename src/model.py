@@ -3,6 +3,7 @@
 
 from tensorflow.keras import models, layers
 from keras.applications.vgg16 import VGG16
+from .data.generator import Generator
 import tensorflow as tf
 import numpy as np
 import os
@@ -48,7 +49,7 @@ if __name__ == '__main__':
                 'samplewise_std_normalization': True,
                 'horizontal_flip': False,
                 'vertical_flip': False}}
-    train = CroppedGenerator(train_image_paths, state='train', seed=SEED, aux=True, **params)
+    train = Generator(train_image_paths, state='train', seed=SEED, aux=True, **params)
     aux = auxilliary_model(const.TARGET_SIZE, const.N_CLASSES)
     optimizer = tf.keras.optimizers.Adam(learning_rate=1E-4,
                                          beta_1=0.9,
@@ -63,9 +64,9 @@ if __name__ == '__main__':
     model.save(BASE_DIR, 'models', 'localizer')
     params['localizer'] = aux
 
-    train = CroppedGenerator(train_image_paths, state='train', seed=SEED, **params)
-    valid = CroppedGenerator(valid_image_paths, state='valid', seed=SEED, **params)
-    test = CroppedGenerator(test_image_paths, state='test', seed=SEED, **params)
+    train = Generator(train_image_paths, state='train', seed=SEED, **params)
+    valid = Generator(valid_image_paths, state='valid', seed=SEED, **params)
+    test = Generator(test_image_paths, state='test', seed=SEED, **params)
 
     mlflow.tensorflow.autolog()
     with mlflow.start_run():

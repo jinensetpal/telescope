@@ -3,20 +3,20 @@
 
 import os
 
-IMAGE_SIZE = (1024, 2048) 
+# smallest dimensions - (775, 413)
+IMAGE_SIZE = (1600, 1205) # largest dimensions 
 IMAGE_SHAPE = IMAGE_SIZE + (3,)
 
 BASE_DIR = os.getcwd() 
 COLOR_MODE = 'rgb'
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 PROJECT_NAME = 'telescope'
 CLASS_MODE = 'categorical'
 EPOCHS = 10
 AUX_EPOCHS = 10
 
 SEED = 1024
-N_CLASSES = 4
-CROP_THRESHOLD = 0.97
+THRESHOLD = 0.97
 PENULTIMATE_LAYER = 'conv2d_4'
 
 N_CHANNELS = 3
