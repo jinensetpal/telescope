@@ -96,7 +96,7 @@ class Generator(tf.keras.utils.Sequence):
             X['original'][i,] = self.padding(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')), self.dim[1][::-1])
             y[i] = self.classes[ID[1]]
             if self.localizer:
-                X['cropped'][i,] = self.padding(X['original'][i,], self.dim[0][::-1])
+                X['cropped'][i,] = np.resize(X['original'][i,], self.dim[0] + (self.n_channels,))
 
                 cam, pred = get_class_activation_map(self.localizer, X['cropped'][i,])
                 l, r, t, b = edges(cam) + edges(cam.T)

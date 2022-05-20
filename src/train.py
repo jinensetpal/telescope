@@ -8,6 +8,8 @@ import tensorflow as tf
 from . import const
 import pandas as pd
 import numpy as np
+import mlflow
+import sys
 import os
 
 def get_model(dim, classes, channels=3, primary=True):
@@ -36,9 +38,9 @@ def get_callbacks():
     return es, reduce_lr
 
 if __name__ == '__main__':
-    df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_family_train.txt'), sep=' ', header=None, dtype = str),
-          'validation': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_val.txt'), sep=' ', header=None, dtype = str),
-          'test': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_test.txt'), sep=' ', header=None, dtype = str)}
+    df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_family_train.txt'), sep=' ', header=None, dtype=str),
+          'validation': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_val.txt'), sep=' ', header=None, dtype=str),
+          'test': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_test.txt'), sep=' ', header=None, dtype=str)}
     params = {'dim': [const.AUX_SIZE, const.IMAGE_SIZE],
             'batch_size': const.BATCH_SIZE,
             'n_channels': const.N_CHANNELS,
@@ -50,29 +52,36 @@ if __name__ == '__main__':
                 'horizontal_flip': False,
                 'vertical_flip': False}}
     train = Generator(df['train'].values.tolist(), state='train', seed=const.SEED, **params)
-    aux = get_model(const.AUX_SIZE, len(params['classes']), primary=False)
     optimizer = tf.keras.optimizers.Adam(learning_rate=1E-4,
                                          beta_1=0.9,
                                          beta_2=0.999,
                                          epsilon=1e-08)
-    aux.compile(optimizer=optimizer,
-        loss='sparse_categorical_crossentropy',
-        metrics=['accuracy'])
-    aux.summary()
 
-    aux.fit(train,
-        epochs=const.AUX_EPOCHS)
-    aux.save(const.BASE_DIR, 'models', 'localizer')
+    aux = None # extending scope 
+    if 'AUX' in sys.argv:
+        aux = get_model(const.AUX_SIZE, len(params['classes']), primary=False)
+        aux.compile(optimizer=optimizer,
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy'])
+        aux.summary()
+
+        aux.fit(train,
+            epochs=const.AUX_EPOCHS)
+        aux.save(os.path.join(const.BASE_DIR, 'models', 'localizer-family'))
+    else:
+        aux = tf.keras.models.load_model(os.path.join(const.BASE_DIR, 'models', 'localizer-family'))
+
+    df['train'] = pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype=str) 
     params['localizer'] = aux
+    params['classes'] = np.unique(df['train'][1])
 
-    df['train'] = pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str) 
     train = Generator(df['train'].values.tolist(), state='train', seed=const.SEED, **params)
-    val = Generator(df['valid'].values.tolist(), state='valid', seed=const.SEED, **params)
+    val = Generator(df['validation'].values.tolist(), state='validation', seed=const.SEED, **params)
     test = Generator(df['test'].values.tolist(), state='test', seed=const.SEED, **params)
 
     mlflow.tensorflow.autolog()
     with mlflow.start_run():
-        classifier = get_model(len(params['classes']))
+        classifier = get_model(const.TARGET_SIZE, len(params['classes']))
         classifier.compile(optimizer=optimizer,
             loss='sparse_categorical_crossentropy',
             metrics=['accuracy'])

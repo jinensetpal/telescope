@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from ..const import BASE_DIR, THRESHOLD
+from ..const import BASE_DIR, THRESHOLD, PENULTIMATE_LAYER, TARGET_SIZE
 import matplotlib.pyplot as plt
 from matplotlib import patches
 from tensorflow import keras
 import tensorflow as tf
 import numpy as np
+import scipy as sp
 import imageio
 import os
 
@@ -39,7 +40,7 @@ def get_class_activation_map(model, img):
     conv_outputs, predictions = get_output([img])
     conv_outputs = np.squeeze(conv_outputs)
     mat_for_mult = sp.ndimage.zoom(conv_outputs, (TARGET_SIZE[0] / conv_outputs.shape[0], TARGET_SIZE[1] / conv_outputs.shape[1], 1), order=1) # dim: 224 x 224 x 2048
-    final_output = np.dot(mat_for_mult.reshape((TARGET_SIZE[0] * TARGET_SIZE[1], 64)), class_weights_winner).reshape(TARGET_SIZE[0], TARGET_SIZE[1]) # dim: 224 x 224
+    final_output = np.dot(mat_for_mult.reshape((TARGET_SIZE[0] * TARGET_SIZE[1], TARGET_SIZE[0] * TARGET_SIZE[1] // mat_for_mult.shape[2])), class_weights_winner).reshape(TARGET_SIZE[0], TARGET_SIZE[1]) # dim: 224 x 224
 
     return final_output, label_index
 
@@ -50,7 +51,7 @@ if __name__ == '__main__':
             'n_channels': N_CHANNELS,
             'shuffle': True,
             'classes': np.unique(df[1]),
-            # 'localizer': os.path.join('models', 'localizer'),
+            'localizer': os.path.join('models', 'localizer-family'),
             'augment': {'rescale': 1/255,
                 'samplewise_center': True,
                 'samplewise_std_normalization': True,
@@ -79,4 +80,4 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     plt.show()
-    fig.savefig(os.path.join('visualizations', 'cams-crops.png'))
+    fig.savefig(os.path.join(const.BASE_DIR, 'data', 'visualizations', 'cams.png'))
