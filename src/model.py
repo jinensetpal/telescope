@@ -36,7 +36,7 @@ def get_callbacks():
     return es, reduce_lr
 
 if __name__ == '__main__':
-    df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str),
+    df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_family_train.txt'), sep=' ', header=None, dtype = str),
           'validation': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_val.txt'), sep=' ', header=None, dtype = str),
           'test': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_test.txt'), sep=' ', header=None, dtype = str)}
     params = {'dim': [const.AUX_SIZE, const.IMAGE_SIZE],
@@ -62,9 +62,10 @@ if __name__ == '__main__':
 
     aux.fit(train,
         epochs=const.AUX_EPOCHS)
-    model.save(const.BASE_DIR, 'models', 'localizer')
+    aux.save(const.BASE_DIR, 'models', 'localizer')
     params['localizer'] = aux
 
+    df['train'] = pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str) 
     train = Generator(df['train'].values.tolist(), state='train', seed=const.SEED, **params)
     val = Generator(df['valid'].values.tolist(), state='valid', seed=const.SEED, **params)
     test = Generator(df['test'].values.tolist(), state='test', seed=const.SEED, **params)
@@ -83,4 +84,4 @@ if __name__ == '__main__':
                 validation_data=val,
                 callbacks=get_callbacks())
         classifier.evaluate(test_X, test_y)
-        model.save(os.path.join(const.BASE_DIR, 'models', 'classifier'))
+        classifier.save(os.path.join(const.BASE_DIR, 'models', 'classifier'))
