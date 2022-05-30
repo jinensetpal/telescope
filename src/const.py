@@ -9,7 +9,7 @@ IMAGE_SHAPE = IMAGE_SIZE + (3,)
 
 BASE_DIR = os.getcwd() 
 COLOR_MODE = 'rgb'
-BATCH_SIZE = 2 
+BATCH_SIZE = 16
 PROJECT_NAME = 'telescope'
 CLASS_MODE = 'categorical'
 EPOCHS = 5
@@ -17,7 +17,7 @@ AUX_EPOCHS = 2
 
 SEED = 1024
 THRESHOLD = 0.97
-PENULTIMATE_LAYER = 'block5_conv3'
+PENULTIMATE_LAYER = 'block3_conv3'
 
 N_CHANNELS = 3
 DOWNSCALE_FACTOR = 4

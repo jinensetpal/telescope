@@ -101,8 +101,8 @@ class Generator(tf.keras.utils.Sequence):
                 cam, pred = get_class_activation_map(self.localizer, X['cropped'][i,])
                 l, r, t, b = edges(cam) + edges(cam.T)
 
-                X['cropped'][i,] = X['cropped'][i,].crop(l, t, r, b).crop_pad(self.dim[0][::-1])
-                X['upsampled'][i,] = X['original'][i,].crop(int(l * self.dim[1][0] / self.dim[0][0]), int(r * self.dim[1][0] / self.dim[0][0]), int(t * self.dim[1][1] / self.dim[0][1]), int(b * self.dim[1][1] / self.dim[0][1])).resize(self.dim[0][::-1])
+                X['cropped'][i,] = np.resize(crop(X['cropped'][i,], l, r, t, b), self.dim[0] + (self.n_channels,))
+                X['upsampled'][i,] = np.resize(crop(X['original'][i,], int(l * self.dim[1][0] / self.dim[0][0]), int(r * self.dim[1][0] / self.dim[0][0]), int(t * self.dim[1][1] / self.dim[0][1]), int(b * self.dim[1][1] / self.dim[0][1])), self.dim[0] + (self.n_channels,))
 
             if self.state == "train":
                 params = self.augmentation_params() # randomize on seed
@@ -112,8 +112,10 @@ class Generator(tf.keras.utils.Sequence):
                     X['upsampled'][i,] = self.gen.apply_transform(x=X['upsampled'][i,], transform_parameters=params)
 
         if not self.localizer:
+            print('No localizer')
             return X['original'], y
-        return X, y
+        print('Localizer')
+        return X['cropped'], y
 
 def create_samples(generator):
     Path(os.path.join(BASE_DIR, 'data', 'samples')).mkdir(parents=True, exist_ok=True)
@@ -125,13 +127,14 @@ def create_samples(generator):
         else: 
             imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', f'{idx + 1}_o.png'), input_X[idx][:, :, ::-1])
 
-if __name__ == '__main__': ## tests every generator
+if __name__ == '__main__':
     df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
     params = {'dim': [AUX_SIZE, IMAGE_SIZE],
             'batch_size': BATCH_SIZE,
             'n_channels': N_CHANNELS,
             'shuffle': True,
             'classes': np.unique(df[1]),
+            'localizer': os.path.join(BASE_DIR, 'models', 'localizer-family'),
             'augment': {'rescale': 1/255,
                 'samplewise_center': True,
                 'samplewise_std_normalization': True,
