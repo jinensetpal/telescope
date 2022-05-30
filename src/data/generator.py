@@ -112,9 +112,7 @@ class Generator(tf.keras.utils.Sequence):
                     X['upsampled'][i,] = self.gen.apply_transform(x=X['upsampled'][i,], transform_parameters=params)
 
         if not self.localizer:
-            print('No localizer')
             return X['original'], y
-        print('Localizer')
         return X['cropped'], y
 
 def create_samples(generator):

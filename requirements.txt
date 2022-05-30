@@ -8,3 +8,4 @@ tensorflow==2.8.1
 ipykernel==6.13.0
 mlflow==1.26.0
 protobuf==3.20.1
+opencv-python==4.5.5.64

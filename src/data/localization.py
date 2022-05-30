@@ -46,10 +46,11 @@ def get_class_activation_map(model, img):
 
 if __name__ == '__main__':
     from ..const import AUX_SIZE, IMAGE_SIZE, BATCH_SIZE, SEED, N_CHANNELS
+    from cv2 import resize, INTER_CUBIC
     from .generator import Generator
     import imageio
 
-    df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
+    df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype=str)
     params = {'dim': [AUX_SIZE, IMAGE_SIZE],
             'batch_size': BATCH_SIZE,
             'n_channels': N_CHANNELS,
@@ -68,7 +69,7 @@ if __name__ == '__main__':
                     facecolor='white')
     
     for idx in range(BATCH_SIZE):
-        out, pred = get_class_activation_map(model, np.resize(test_X[idx], AUX_SIZE + (3,)))
+        out, pred = get_class_activation_map(model, resize(test_X[idx], dsize=AUX_SIZE[::-1], interpolation=INTER_CUBIC))
         l, r, t, b = edges(out) + edges(out.T)
 
         fig.add_subplot(4, 4, idx + 1)
