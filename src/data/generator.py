@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from ..const import BATCH_SIZE, AUX_SIZE, IMAGE_SIZE, BASE_DIR, SEED, N_CHANNELS
+from ..const import BATCH_SIZE, AUX_SIZE, IMAGE_SIZE, BASE_DIR, SEED, N_CHANNELS, LOCALIZER
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from .localization import get_class_activation_map, edges, crop
 from PIL import Image, ImageOps
@@ -16,7 +16,7 @@ import os
 
 class Generator(tf.keras.utils.Sequence):
     def __init__(self, df, batch_size, dim, n_channels, classes,
-            shuffle=True, state="train", augment=None, seed=None, aux=False, localizer=None):
+            shuffle=True, state="train", augment=None, seed=None, localizer=None):
         self.df = df 
         self.batch_size = batch_size
         self.dim = dim
@@ -87,6 +87,7 @@ class Generator(tf.keras.utils.Sequence):
         # Initialization - dim: [TARGET, IMAGE]
         X = {'cropped': np.empty((self.batch_size, *self.dim[0], self.n_channels)),
              'upsampled': np.empty((self.batch_size, *self.dim[0], self.n_channels)),
+             'target': np.empty((self.batch_size, *self.dim[0], self.n_channels)),
              'original': np.empty((self.batch_size, *self.dim[1], self.n_channels))}
         y = np.empty((self.batch_size), dtype=int)
 
@@ -94,14 +95,13 @@ class Generator(tf.keras.utils.Sequence):
         for i, ID in enumerate(list_IDs_temp):
             # load images
             X['original'][i,] = self.padding(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')), self.dim[1][::-1])
+            X['target'][i,] = np.resize(X['original'][i,], self.dim[0] + (self.n_channels,))
             y[i] = self.classes[ID[1]]
             if self.localizer:
-                X['cropped'][i,] = np.resize(X['original'][i,], self.dim[0] + (self.n_channels,))
+                cam, pred = get_class_activation_map(self.localizer, X['target'][i,])
+                l, r, t, b = edges(cam[0]) + edges(cam[0].T)
 
-                cam, pred = get_class_activation_map(self.localizer, X['cropped'][i,])
-                l, r, t, b = edges(cam) + edges(cam.T)
-
-                X['cropped'][i,] = np.resize(crop(X['cropped'][i,], l, r, t, b), self.dim[0] + (self.n_channels,))
+                X['cropped'][i,] = np.resize(crop(X['target'][i,], l, r, t, b), self.dim[0] + (self.n_channels,))
                 X['upsampled'][i,] = np.resize(crop(X['original'][i,], int(l * self.dim[1][0] / self.dim[0][0]), int(r * self.dim[1][0] / self.dim[0][0]), int(t * self.dim[1][1] / self.dim[0][1]), int(b * self.dim[1][1] / self.dim[0][1])), self.dim[0] + (self.n_channels,))
 
             if self.state == "train":
@@ -111,6 +111,8 @@ class Generator(tf.keras.utils.Sequence):
                     X['cropped'][i,] = self.gen.apply_transform(x=X['cropped'][i,], transform_parameters=params)
                     X['upsampled'][i,] = self.gen.apply_transform(x=X['upsampled'][i,], transform_parameters=params)
 
+        if self.state == 'debug':
+            return X, y
         if not self.localizer:
             return X['original'], y
         return X['cropped'], y
@@ -120,10 +122,10 @@ def create_samples(generator):
     input_X, input_y = generator.__getitem__(0)
     for idx in range(BATCH_SIZE): 
         if type(input_X) == dict:
-            for datatype in ['original', 'cropped', 'upsampled']:
-                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', f'{idx + datatype[0]}_o.png'), input_X[datatype][idx][:, :, ::-1])
+            for datatype in ['original', 'cropped', 'upsampled', 'target']:
+                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_{datatype[0]}.png'), input_X[datatype][idx][:, :, ::-1])
         else: 
-            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', f'{idx + 1}_o.png'), input_X[idx][:, :, ::-1])
+            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_o.png'), input_X[idx][:, :, ::-1])
 
 if __name__ == '__main__':
     df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
@@ -132,12 +134,12 @@ if __name__ == '__main__':
             'n_channels': N_CHANNELS,
             'shuffle': True,
             'classes': np.unique(df[1]),
-            'localizer': os.path.join(BASE_DIR, 'models', 'localizer-family'),
+            'localizer': os.path.join(BASE_DIR, 'models', LOCALIZER),
             'augment': {'rescale': 1/255,
                 'samplewise_center': True,
                 'samplewise_std_normalization': True,
                 'horizontal_flip': False,
                 'vertical_flip': False}}
-    generator = Generator(df.values.tolist(), state='train', seed=SEED, **params)
+    generator = Generator(df.values.tolist(), state='debug', seed=SEED, **params)
     generator.__getitem__(0)
     create_samples(generator)

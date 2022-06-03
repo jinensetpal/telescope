@@ -27,7 +27,7 @@ def get_model(dim, classes, channels=3, primary=True):
         model.add(layers.Dense(512, activation='relu'))
 
     model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dense(256, activation='relu'))
+    model.add(layers.Dense(512, activation='relu'))
     model.add(layers.Dense(classes, activation='softmax'))
     return model
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
             epochs=const.AUX_EPOCHS)
         aux.save(os.path.join(const.BASE_DIR, 'models', 'localizer-family'))
     else:
-        aux = tf.keras.models.load_model(os.path.join(const.BASE_DIR, 'models', 'localizer-family'))
+        aux = tf.keras.models.load_model(os.path.join(const.BASE_DIR, 'models', const.LOCALIZER))
 
     df['train'] = pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype=str) 
     params['localizer'] = aux
