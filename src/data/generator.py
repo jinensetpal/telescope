@@ -4,6 +4,7 @@
 from ..const import BATCH_SIZE, AUX_SIZE, IMAGE_SIZE, BASE_DIR, SEED, N_CHANNELS, LOCALIZER
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from .localization import get_class_activation_map, edges, crop
+from cv2 import resize, INTER_CUBIC
 from PIL import Image, ImageOps
 from pathlib import Path
 import tensorflow as tf
@@ -85,24 +86,24 @@ class Generator(tf.keras.utils.Sequence):
     def __data_generation(self, list_IDs_temp):
         # Generates data containing batch_size samples -> X : (n_samples, *dim, n_channels)
         # Initialization - dim: [TARGET, IMAGE]
-        X = {'cropped': np.empty((self.batch_size, *self.dim[0], self.n_channels)),
-             'upsampled': np.empty((self.batch_size, *self.dim[0], self.n_channels)),
-             'target': np.empty((self.batch_size, *self.dim[0], self.n_channels)),
-             'original': np.empty((self.batch_size, *self.dim[1], self.n_channels))}
+        X = {'cropped': np.empty((self.batch_size, *self.dim['aux'], self.n_channels)),
+             'upsampled': np.empty((self.batch_size, *self.dim['aux'], self.n_channels)),
+             'target': np.empty((self.batch_size, *self.dim['aux'], self.n_channels)),
+             'original': np.empty((self.batch_size, *self.dim['orig'], self.n_channels))}
         y = np.empty((self.batch_size), dtype=int)
 
         # Generate data
         for i, ID in enumerate(list_IDs_temp):
             # load images
-            X['original'][i,] = self.padding(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')), self.dim[1][::-1])
-            X['target'][i,] = np.resize(X['original'][i,], self.dim[0] + (self.n_channels,))
+            X['original'][i,] = self.padding(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')).convert('RGB'), self.dim['orig'][::-1])
+            X['target'][i,] = resize(X['original'][i,], dsize=self.dim['aux'][::-1], interpolation=INTER_CUBIC) # np.resize(X['original'][i,], self.dim['aux'] + (self.n_channels,))
             y[i] = self.classes[ID[1]]
             if self.localizer:
                 cam, pred = get_class_activation_map(self.localizer, X['target'][i,])
                 l, r, t, b = edges(cam[0]) + edges(cam[0].T)
 
-                X['cropped'][i,] = np.resize(crop(X['target'][i,], l, r, t, b), self.dim[0] + (self.n_channels,))
-                X['upsampled'][i,] = np.resize(crop(X['original'][i,], int(l * self.dim[1][0] / self.dim[0][0]), int(r * self.dim[1][0] / self.dim[0][0]), int(t * self.dim[1][1] / self.dim[0][1]), int(b * self.dim[1][1] / self.dim[0][1])), self.dim[0] + (self.n_channels,))
+                X['cropped'][i,] = np.resize(crop(X['target'][i,], l, r, t, b), self.dim['aux'] + (self.n_channels,))
+                X['upsampled'][i,] = np.resize(crop(X['original'][i,], int(l * self.dim['orig'][0] / self.dim['aux'][0]), int(r * self.dim['orig'][0] / self.dim['aux'][0]), int(t * self.dim['orig'][1] / self.dim['aux'][1]), int(b * self.dim['orig'][1] / self.dim['aux'][1])), self.dim['aux'] + (self.n_channels,))
 
             if self.state == "train":
                 params = self.augmentation_params() # randomize on seed
@@ -114,7 +115,7 @@ class Generator(tf.keras.utils.Sequence):
         if self.state == 'debug':
             return X, y
         if not self.localizer:
-            return X['original'], y
+            return X['target'], y
         return X['cropped'], y
 
 def create_samples(generator):
@@ -123,13 +124,13 @@ def create_samples(generator):
     for idx in range(BATCH_SIZE): 
         if type(input_X) == dict:
             for datatype in ['original', 'cropped', 'upsampled', 'target']:
-                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_{datatype[0]}.png'), input_X[datatype][idx][:, :, ::-1])
+                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_{datatype[:3]}.png'), input_X[datatype][idx][:, :, ::-1])
         else: 
-            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_o.png'), input_X[idx][:, :, ::-1])
+            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_orig.png'), input_X[idx][:, :, ::-1])
 
 if __name__ == '__main__':
     df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
-    params = {'dim': [AUX_SIZE, IMAGE_SIZE],
+    params = {'dim': {'aux': AUX_SIZE, 'orig': IMAGE_SIZE},
             'batch_size': BATCH_SIZE,
             'n_channels': N_CHANNELS,
             'shuffle': True,

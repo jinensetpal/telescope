@@ -41,7 +41,7 @@ if __name__ == '__main__':
     df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_family_train.txt'), sep=' ', header=None, dtype=str),
           'validation': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_val.txt'), sep=' ', header=None, dtype=str),
           'test': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_test.txt'), sep=' ', header=None, dtype=str)}
-    params = {'dim': [const.AUX_SIZE, const.IMAGE_SIZE],
+    params = {'dim': {'aux': const.AUX_SIZE, 'orig': const.IMAGE_SIZE},
             'batch_size': const.BATCH_SIZE,
             'n_channels': const.N_CHANNELS,
             'shuffle': True,
@@ -57,17 +57,19 @@ if __name__ == '__main__':
                                          beta_2=0.999,
                                          epsilon=1e-08)
 
+    mlflow.tensorflow.autolog()
     aux = None # extending scope 
     if 'AUX' in sys.argv:
-        aux = get_model(const.AUX_SIZE, len(params['classes']), primary=False)
-        aux.compile(optimizer=optimizer,
-            loss='sparse_categorical_crossentropy',
-            metrics=['accuracy'])
-        aux.summary()
+        with mlflow.start_run():
+            aux = get_model(const.AUX_SIZE, len(params['classes']), primary=False)
+            aux.compile(optimizer=optimizer,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+            aux.summary()
 
-        aux.fit(train,
-            epochs=const.AUX_EPOCHS)
-        aux.save(os.path.join(const.BASE_DIR, 'models', 'localizer-family'))
+            aux.fit(train,
+                epochs=const.AUX_EPOCHS)
+            aux.save(os.path.join(const.BASE_DIR, 'models', 'localizer-family'))
     else:
         aux = tf.keras.models.load_model(os.path.join(const.BASE_DIR, 'models', const.LOCALIZER))
 
@@ -79,7 +81,6 @@ if __name__ == '__main__':
     val = Generator(df['validation'].values.tolist(), state='validation', seed=const.SEED, **params)
     test = Generator(df['test'].values.tolist(), state='test', seed=const.SEED, **params)
 
-    mlflow.tensorflow.autolog()
     with mlflow.start_run():
         classifier = get_model(const.TARGET_SIZE, len(params['classes']))
         classifier.compile(optimizer=optimizer,

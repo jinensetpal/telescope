@@ -89,5 +89,4 @@ if __name__ == '__main__':
             facecolor='none'))
 
     plt.tight_layout()
-    plt.show()
     fig.savefig(os.path.join(BASE_DIR, 'data', 'samples', 'cams', f'{LOCALIZER.split("-")[1]}.png'))
