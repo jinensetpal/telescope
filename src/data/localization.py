@@ -53,7 +53,7 @@ if __name__ == '__main__':
     from PIL import Image
 
     df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype=str)
-    params = {'dim': [AUX_SIZE, IMAGE_SIZE],
+    params = {'dim': {'aux': AUX_SIZE, 'orig': IMAGE_SIZE},
             'batch_size': BATCH_SIZE,
             'n_channels': N_CHANNELS,
             'shuffle': True,
