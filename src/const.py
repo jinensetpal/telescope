@@ -4,7 +4,8 @@
 import os
 
 # smallest dimensions - (775, 413)
-IMAGE_SIZE = (1600, 1205) # largest dimensions 
+# largest dimensions - (1600, 1205) 
+IMAGE_SIZE = (1024, 700) # mean dimensions 
 IMAGE_SHAPE = IMAGE_SIZE + (3,)
 
 BASE_DIR = os.getcwd() 

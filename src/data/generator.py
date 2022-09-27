@@ -124,9 +124,9 @@ def create_samples(generator):
     for idx in range(BATCH_SIZE): 
         if type(input_X) == dict:
             for datatype in ['original', 'cropped', 'upsampled', 'target']:
-                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_{datatype[:3]}.png'), input_X[datatype][idx][:, :, ::-1])
+                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_{datatype[:3]}.png'), input_X[datatype][idx])
         else: 
-            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_orig.png'), input_X[idx][:, :, ::-1])
+            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_orig.png'), input_X[idx])
 
 if __name__ == '__main__':
     df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
@@ -135,12 +135,14 @@ if __name__ == '__main__':
             'n_channels': N_CHANNELS,
             'shuffle': True,
             'classes': np.unique(df[1]),
-            'localizer': os.path.join(BASE_DIR, 'models', LOCALIZER),
             'augment': {'rescale': 1/255,
                 'samplewise_center': True,
                 'samplewise_std_normalization': True,
                 'horizontal_flip': False,
                 'vertical_flip': False}}
-    generator = Generator(df.values.tolist(), state='debug', seed=SEED, **params)
+    generator = Generator(df.values.tolist(), 
+                          state='debug', 
+                          # localizer=os.path.join(BASE_DIR, 'models', LOCALIZER),
+                          seed=SEED, **params)
     generator.__getitem__(0)
     create_samples(generator)
