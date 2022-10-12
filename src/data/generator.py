@@ -71,17 +71,9 @@ class Generator(tf.keras.utils.Sequence):
         return params 
 
     @staticmethod
-    def padding(img, expected_size):
-        img = img.crop((0, 0, img.size[0], img.size[1] - 20)) # remove copyright footer 
-        img.thumbnail((expected_size[0], expected_size[1]))
-
-        delta_width = expected_size[0] - img.size[0]
-        delta_height = expected_size[1] - img.size[1]
-        pad_width = delta_width // 2
-        pad_height = delta_height // 2
-
-        padding = (pad_width, pad_height, delta_width - pad_width, delta_height - pad_height)
-        return ImageOps.expand(img, padding)
+    def crop(img, expected_size):
+        img = img.crop((0, 0, img.size[0] - 40, img.size[1] - 60)) # -20 to remove copyright footer, -40 to crop into an optimal aspect ration
+        return resize(np.array(img), dsize=expected_size, interpolation=INTER_CUBIC)
 
     def __data_generation(self, list_IDs_temp):
         # Generates data containing batch_size samples -> X : (n_samples, *dim, n_channels)
@@ -95,8 +87,8 @@ class Generator(tf.keras.utils.Sequence):
         # Generate data
         for i, ID in enumerate(list_IDs_temp):
             # load images
-            X['original'][i,] = self.padding(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')).convert('RGB'), self.dim['orig'][::-1])
-            X['target'][i,] = resize(X['original'][i,], dsize=self.dim['aux'][::-1], interpolation=INTER_CUBIC) # np.resize(X['original'][i,], self.dim['aux'] + (self.n_channels,))
+            X['original'][i,] = self.crop(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')).convert('RGB'), self.dim['orig'][::-1])
+            X['target'][i,] = resize(X['original'][i,], dsize=self.dim['aux'][::-1], interpolation=INTER_CUBIC)
             y[i] = self.classes[ID[1]]
             if self.localizer:
                 cam, pred = get_class_activation_map(self.localizer, X['target'][i,])
