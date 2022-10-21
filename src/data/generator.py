@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
-
-from ..const import BATCH_SIZE, AUX_SIZE, IMAGE_SIZE, BASE_DIR, SEED, N_CHANNELS, LOCALIZER
+# TODO: swap import const vars for import const file
+from ..const import const
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from .localization import get_class_activation_map, edges, crop
 from cv2 import resize, INTER_CUBIC
@@ -95,7 +95,7 @@ class Generator(tf.keras.utils.Sequence):
         # Generate data
         for i, ID in enumerate(list_IDs_temp):
             # load images
-            X['original'][i,] = self.padding(Image.open(os.path.join(BASE_DIR, 'data', 'images', f'{ID[0]}.jpg')).convert('RGB'), self.dim['orig'][::-1])
+            X['original'][i,] = self.padding(Image.open(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'images', f'{ID[0]}.jpg')).convert('RGB'), self.dim['orig'][::-1])
             X['target'][i,] = resize(X['original'][i,], dsize=self.dim['aux'][::-1], interpolation=INTER_CUBIC) # np.resize(X['original'][i,], self.dim['aux'] + (self.n_channels,))
             y[i] = self.classes[ID[1]]
             if self.localizer:
@@ -119,28 +119,28 @@ class Generator(tf.keras.utils.Sequence):
         return X['cropped'], y
 
 def create_samples(generator):
-    Path(os.path.join(BASE_DIR, 'data', 'samples')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'samples')).mkdir(parents=True, exist_ok=True)
     input_X, input_y = generator.__getitem__(0)
-    for idx in range(BATCH_SIZE): 
+    for idx in range(const.BATCH_SIZE): 
         if type(input_X) == dict:
             for datatype in ['original', 'cropped', 'upsampled', 'target']:
-                imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_{datatype[:3]}.png'), input_X[datatype][idx][:, :, ::-1])
+                imageio.imwrite(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'samples', 'generator', f'{idx + 1}_{datatype[:3]}.png'), input_X[datatype][idx][:, :, ::-1])
         else: 
-            imageio.imwrite(os.path.join(BASE_DIR, 'data', 'samples', 'generator', f'{idx + 1}_orig.png'), input_X[idx][:, :, ::-1])
+            imageio.imwrite(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'samples', 'generator', f'{idx + 1}_orig.png'), input_X[idx][:, :, ::-1])
 
 if __name__ == '__main__':
-    df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
-    params = {'dim': {'aux': AUX_SIZE, 'orig': IMAGE_SIZE},
-            'batch_size': BATCH_SIZE,
-            'n_channels': N_CHANNELS,
+    df = pd.read_csv(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'images_variant_train.txt'), sep=' ', header=None, dtype = str)  
+    params = {'dim': {'aux': const.AUX_SIZE, 'orig': const.IMAGE_SIZE},
+            'batch_size': const.BATCH_SIZE,
+            'n_channels': const.N_CHANNELS,
             'shuffle': True,
             'classes': np.unique(df[1]),
-            'localizer': os.path.join(BASE_DIR, 'models', LOCALIZER),
+            'localizer': os.path.join(const.BASE_DIR, 'models', const.LOCALIZER),
             'augment': {'rescale': 1/255,
                 'samplewise_center': True,
                 'samplewise_std_normalization': True,
                 'horizontal_flip': False,
                 'vertical_flip': False}}
-    generator = Generator(df.values.tolist(), state='debug', seed=SEED, **params)
+    generator = Generator(df.values.tolist(), state='debug', seed=const.SEED, **params)
     generator.__getitem__(0)
     create_samples(generator)
