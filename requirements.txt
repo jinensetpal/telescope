@@ -4,7 +4,8 @@ numpy==1.22.3
 pandas==1.4.2
 Pillow>=9.1.1
 scipy==1.8.0
-tensorflow==2.8.1
+tensorflow==2.8.1; sys.platform == "linux" or sys.platform == "win32"
+tensorflow-macos==2.9.0; sys.platform == "darwin" and platform.machine == "arm64"
 ipykernel==6.13.0
 mlflow==1.26.0
 protobuf==3.20.1

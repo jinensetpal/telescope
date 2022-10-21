@@ -38,9 +38,9 @@ def get_callbacks():
     return es, reduce_lr
 
 if __name__ == '__main__':
-    df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_family_train.txt'), sep=' ', header=None, dtype=str),
-          'validation': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_val.txt'), sep=' ', header=None, dtype=str),
-          'test': pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_test.txt'), sep=' ', header=None, dtype=str)}
+    df = {'train': pd.read_csv(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'images_family_train.txt'), sep=' ', header=None, dtype=str),
+          'validation': pd.read_csv(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'images_variant_val.txt'), sep=' ', header=None, dtype=str),
+          'test': pd.read_csv(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'images_variant_test.txt'), sep=' ', header=None, dtype=str)}
     params = {'dim': {'aux': const.AUX_SIZE, 'orig': const.IMAGE_SIZE},
             'batch_size': const.BATCH_SIZE,
             'n_channels': const.N_CHANNELS,
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     else:
         aux = tf.keras.models.load_model(os.path.join(const.BASE_DIR, 'models', const.LOCALIZER))
 
-    df['train'] = pd.read_csv(os.path.join(const.BASE_DIR, 'data', 'images_variant_train.txt'), sep=' ', header=None, dtype=str) 
+    df['train'] = pd.read_csv(os.path.join(const.BASE_DIR, 'data', const.DATASET_NAME, 'images_variant_train.txt'), sep=' ', header=None, dtype=str) 
     params['localizer'] = aux
     params['classes'] = np.unique(df['train'][1])
 

@@ -27,3 +27,4 @@ MLFLOW_TRACKING = 'https://dagshub.com/jinensetpal/telesecope.mlflow'
 TARGET_SIZE = IMAGE_SIZE[0] // 4, IMAGE_SIZE[1] // 4
 TARGET_SHAPE = TARGET_SIZE + (3,)
 AUX_SIZE = IMAGE_SIZE[0] // 16, IMAGE_SIZE[1] // 16
+DATASET_NAME = "fgvc_aircraft"
