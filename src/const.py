@@ -4,7 +4,8 @@
 import os
 
 # smallest dimensions - (775, 413)
-IMAGE_SIZE = (1600, 1205) # largest dimensions 
+# largest dimensions - (1600, 1205) 
+IMAGE_SIZE = (448, 768) # experimentally evaluated 
 IMAGE_SHAPE = IMAGE_SIZE + (3,)
 
 BASE_DIR = os.getcwd() 
@@ -26,4 +27,4 @@ MLFLOW_TRACKING = 'https://dagshub.com/jinensetpal/telesecope.mlflow'
 
 TARGET_SIZE = IMAGE_SIZE[0] // 4, IMAGE_SIZE[1] // 4
 TARGET_SHAPE = TARGET_SIZE + (3,)
-AUX_SIZE = IMAGE_SIZE[0] // 16, IMAGE_SIZE[1] // 16
+AUX_SIZE = IMAGE_SIZE[0] // 8, IMAGE_SIZE[1] // 8
